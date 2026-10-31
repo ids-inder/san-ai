@@ -23,7 +23,7 @@ dependencies = [
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
 
 [project.scripts]
-sanai = "sanai.cli:app"
+sanai = "sanai.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["sanai*"]

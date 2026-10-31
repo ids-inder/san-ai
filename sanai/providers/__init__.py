@@ -2,9 +2,24 @@
 from __future__ import annotations
 
 from ..config import Settings, settings
-from .base import LLM, ProviderError, salvage_json
+from .base import (
+    LLM,
+    Budget,
+    BudgetExceeded,
+    ProviderError,
+    Usage,
+    salvage_json,
+)
 
-__all__ = ["LLM", "ProviderError", "salvage_json", "build_llm"]
+__all__ = [
+    "LLM",
+    "Budget",
+    "BudgetExceeded",
+    "ProviderError",
+    "Usage",
+    "salvage_json",
+    "build_llm",
+]
 
 
 def build_llm(cfg: Settings | None = None) -> LLM:

@@ -12,6 +12,7 @@ class OllamaLLM(LLM):
     name = "ollama"
 
     def __init__(self, cfg: Settings) -> None:
+        super().__init__()
         try:
             import httpx2 as httpx
         except ImportError:  # pragma: no cover - fall back to httpx if present
@@ -30,6 +31,7 @@ class OllamaLLM(LLM):
         fmt: dict[str, Any] | None,
         max_tokens: int | None,
     ) -> str:
+        self.budget.check(self.usage)
         payload: dict[str, Any] = {
             "model": self.cfg.ollama_model,
             "system": system,
@@ -48,7 +50,13 @@ class OllamaLLM(LLM):
             resp.raise_for_status()
         except Exception as exc:  # noqa: BLE001 - httpx variants differ
             raise ProviderError(f"Ollama call failed: {exc}") from exc
-        out = (resp.json().get("response") or "").strip()
+        body = resp.json()
+        self.usage.add(
+            self.cfg.ollama_model,
+            input_tokens=body.get("prompt_eval_count", 0) or 0,
+            output_tokens=body.get("eval_count", 0) or 0,
+        )
+        out = (body.get("response") or "").strip()
         if not out:
             raise ProviderError("empty response from Ollama")
         return out
