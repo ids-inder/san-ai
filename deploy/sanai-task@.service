@@ -1,0 +1,25 @@
+# Run one San AI task as a unit, so systemd owns its lifecycle and logs:
+#   systemd-run --unit=sanai-adhoc /opt/sanai/venv/bin/sanai do "..."
+# or with this template:
+#   systemctl start 'sanai-task@restart-nginx.service'
+# after dropping the request into /etc/sanai/tasks/restart-nginx
+#
+# NOTE: this runs with full system access, matching autonomy=full. To bound
+# the blast radius without reducing autonomy, uncomment the sandbox block.
+[Unit]
+Description=San AI task: %i
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/sanai
+EnvironmentFile=/etc/sanai/sanai.env
+ExecStart=/bin/bash -c '/opt/sanai/venv/bin/sanai do "$(cat /etc/sanai/tasks/%i)"'
+TimeoutStartSec=3600
+
+# --- optional containment -------------------------------------------------
+# User=sanai
+# NoNewPrivileges=yes
+# ProtectSystem=strict
+# ProtectHome=yes
+# ReadWritePaths=/var/lib/sanai /srv /etc/nginx
+# CapabilityBoundingSet=CAP_NET_BIND_SERVICE

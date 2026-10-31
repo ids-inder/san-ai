@@ -1,0 +1,36 @@
+# Web dashboard. Read-mostly, so it runs locked down and unprivileged.
+# Install:  cp deploy/sanai-web.service /etc/systemd/system/
+[Unit]
+Description=San AI dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sanai
+Group=sanai
+WorkingDirectory=/opt/sanai
+EnvironmentFile=/etc/sanai/sanai.env
+ExecStart=/opt/sanai/venv/bin/sanai serve
+Restart=on-failure
+RestartSec=5
+
+# The dashboard never needs to change the system.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+ReadWritePaths=/var/lib/sanai
+CapabilityBoundingSet=
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target
