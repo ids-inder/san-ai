@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sanai"
+version = "0.1.0"
+description = "San AI - a self-hosted agent that learns a concept, proves it understands it, then executes it."
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=1.0.0",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "jinja2>=3.1",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "typer>=0.12",
+    "rich>=13.7",
+    "httpx2>=0.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+sanai = "sanai.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["sanai*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
