@@ -155,6 +155,24 @@ def cmd_ledger(args, settings: Settings) -> int:
     return 0
 
 
+def cmd_dashboard(args, settings: Settings) -> int:
+    from .web.server import Dashboard, serve
+    provider, pname = _provider(settings, args.mock)
+    store = Store(settings.data_dir)
+    dash = Dashboard(settings, provider, pname, store)
+    httpd = serve(dash, args.host, args.port)
+    url = f"http://{args.host}:{args.port}"
+    mode = "LIVE" if settings.live_enabled else "paper"
+    print(f"San Arb dashboard on {url}  (data: {pname}, mode: {mode})")
+    print("Read-only monitor - does not place orders. Ctrl-C to stop.")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nstopped.")
+        httpd.shutdown()
+    return 0
+
+
 def cmd_auth_url(args, settings: Settings) -> int:
     from .fyers_auth import auth_url
     print(auth_url(settings))
@@ -194,6 +212,12 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("ledger", help="tail the audit log")
     sp.add_argument("-n", type=int, default=30, help="rows to show")
     sp.set_defaults(func=cmd_ledger)
+
+    sp = sub.add_parser("dashboard", help="live web dashboard (read-only monitor)")
+    sp.add_argument("--mock", action="store_true", help="force mock data")
+    sp.add_argument("--host", default="127.0.0.1", help="bind host (default 127.0.0.1)")
+    sp.add_argument("--port", type=int, default=8777, help="port (default 8777)")
+    sp.set_defaults(func=cmd_dashboard)
 
     sp = sub.add_parser("auth-url", help="print FYERS login URL")
     sp.set_defaults(func=cmd_auth_url)
