@@ -22,6 +22,7 @@ from typing import Dict, List, Optional
 from ..config import Settings
 from ..models import Quote
 from .base import MarketDataProvider
+from .nav import NavProvider
 
 # Symbols used to derive macro reference values. Overridable if FYERS changes
 # its symbology.
@@ -31,9 +32,10 @@ GOLD_SYMBOL = "MCX:GOLDPETAL-INDEX"         # petal ~ 1g; adjust to your feed
 
 
 class FyersProvider(MarketDataProvider):
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, nav_provider: Optional[NavProvider] = None) -> None:
         self._settings = settings
         self._client = None  # lazily created
+        self._nav = nav_provider  # supplies ETF NAV, which FYERS does not
 
     # -- SDK plumbing ---------------------------------------------------------
     def _api(self):
@@ -60,33 +62,74 @@ class FyersProvider(MarketDataProvider):
         return self._client
 
     # -- MarketDataProvider ---------------------------------------------------
-    def quotes(self, symbols: List[str]) -> Dict[str, Quote]:
+    def quotes(self, symbols: List[str], with_depth: bool = True) -> Dict[str, Quote]:
+        """Fetch prices for `symbols`.
+
+        Two FYERS endpoints are combined:
+          * quotes()  -> last price, best bid/ask, day volume (batched, 1 call);
+          * depth()   -> resting book size per symbol (1 call each), used by the
+                         liquidity gate. quotes() does NOT carry depth, so this
+                         second call is required. It is best-effort: if a depth
+                         call fails, the quote is still returned with qty=None and
+                         the risk gate falls back to LIMIT-price protection.
+
+        NAV is intentionally left None here - it is not in the FYERS feed. A NAV
+        source (e.g. AMFI daily NAV / exchange iNAV) is injected separately by a
+        NavProvider; see providers/nav.py.
+        """
         if not symbols:
             return {}
         api = self._api()
-        resp = api.quotes({"symbols": ",".join(symbols)})
         out: Dict[str, Quote] = {}
+
+        resp = api.quotes({"symbols": ",".join(symbols)})
         if not isinstance(resp, dict) or resp.get("s") != "ok":
             return out
+
+        # First pass: price fields from quotes().
+        price_rows: Dict[str, dict] = {}
         for row in resp.get("d", []):
             sym = row.get("n")
-            v = row.get("v", {})
-            if not sym or "lp" not in v:
-                continue
-            depth = v.get("depth") or {}
-            buys = depth.get("buy") or []
-            sells = depth.get("sell") or []
+            v = row.get("v", {}) or {}
+            if sym and "lp" in v:
+                price_rows[sym] = v
+
+        # Second pass: resting size from depth() (one symbol per call).
+        for sym, v in price_rows.items():
+            bid_qty = ask_qty = None
+            if with_depth:
+                bid_qty, ask_qty = self._depth_totals(sym)
+            nav = self._nav.nav_for_symbol(sym) if self._nav else None
             out[sym] = Quote(
                 symbol=sym,
                 ltp=float(v.get("lp")),
                 bid=float(v["bid"]) if v.get("bid") else None,
                 ask=float(v["ask"]) if v.get("ask") else None,
-                bid_qty=int(sum(lvl.get("qty", 0) for lvl in buys)) or None,
-                ask_qty=int(sum(lvl.get("qty", 0) for lvl in sells)) or None,
+                bid_qty=bid_qty,
+                ask_qty=ask_qty,
                 day_volume=int(v["volume"]) if v.get("volume") else None,
-                published_nav=None,  # NAV comes from AMC/AMFI, wired separately
+                published_nav=nav,  # from NavProvider (AMFI); FYERS has no NAV
             )
         return out
+
+    def _depth_totals(self, symbol: str):
+        """Return (total_bid_qty, total_ask_qty) from depth(), or (None, None).
+
+        Best-effort: any failure degrades to unknown depth rather than raising,
+        so one illiquid symbol cannot abort a scan.
+        """
+        try:
+            resp = self._api().depth({"symbol": symbol, "ohlcv_flag": "1"})
+        except Exception:  # pragma: no cover - network dependent
+            return None, None
+        if not isinstance(resp, dict) or resp.get("s") != "ok":
+            return None, None
+        node = (resp.get("d") or {}).get(symbol) or {}
+        # FYERS exposes side totals as totalbuyqty / totalsellqty.
+        bid_qty = node.get("totalbuyqty")
+        ask_qty = node.get("totalsellqty")
+        return (int(bid_qty) if bid_qty else None,
+                int(ask_qty) if ask_qty else None)
 
     def _ltp(self, symbol: str) -> Optional[float]:
         q = self.quotes([symbol]).get(symbol)

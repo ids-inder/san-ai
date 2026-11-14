@@ -39,10 +39,15 @@ def _fmt_signal(s: Signal) -> str:
 
 
 def _provider(settings: Settings, force_mock: bool):
-    """Pick a data provider. Mock unless live creds exist and not forced-mock."""
+    """Pick a data provider. Mock unless live creds exist and not forced-mock.
+
+    When live, the FYERS provider is paired with the AMFI NAV provider so ETF
+    quotes come back with a NAV (FYERS itself has none).
+    """
     if not force_mock and settings.fyers_client_id and settings.fyers_access_token:
         from .providers.fyers import FyersProvider
-        return FyersProvider(settings), "FYERS"
+        from .providers.nav import AmfiNavProvider
+        return FyersProvider(settings, nav_provider=AmfiNavProvider()), "FYERS"
     from .providers.mock import MockProvider
     return MockProvider(), "MOCK"
 
