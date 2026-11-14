@@ -79,6 +79,18 @@ class Settings:
     # Never take more than this fraction of resting size at the touch.
     max_book_participation: float = field(default_factory=lambda: _env_float("SANARB_MAX_BOOK_PARTICIPATION", 0.25))
 
+    # ---- Gold source (SGB fair value) --------------------------------------
+    # Manual override: if > 0, use this fixed 999 price/gram and skip MCX.
+    gold_price: float = field(default_factory=lambda: _env_float("SANARB_GOLD_PRICE", 0.0))
+    # Explicit MCX contract (e.g. "MCX:GOLDM26DECFUT"); else auto-resolve root.
+    gold_symbol: str = field(default_factory=lambda: _env_str("SANARB_GOLD_SYMBOL", ""))
+    gold_root: str = field(default_factory=lambda: _env_str("SANARB_GOLD_ROOT", "GOLDM"))
+    gold_grams_per_quote: float = field(default_factory=lambda: _env_float("SANARB_GOLD_GRAMS_PER_QUOTE", 10.0))
+    # 999/995 purity conversion (MCX gold is 995 fine); IBJA/SGB reference is 999.
+    gold_purity_factor: float = field(default_factory=lambda: _env_float("SANARB_GOLD_PURITY_FACTOR", 999.0 / 995.0))
+    # Optional haircut for near-month futures premium over spot.
+    gold_basis_adj: float = field(default_factory=lambda: _env_float("SANARB_GOLD_BASIS_ADJ", 0.0))
+
     # ---- Engine loop --------------------------------------------------------
     scan_interval_sec: int = field(default_factory=lambda: _env_int("SANARB_SCAN_INTERVAL_SEC", 60))
     data_dir: str = field(default_factory=lambda: _env_str("SANARB_DATA_DIR", ".sanarb"))

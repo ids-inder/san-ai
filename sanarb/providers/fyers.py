@@ -23,19 +23,34 @@ from ..config import Settings
 from ..models import Quote
 from .base import MarketDataProvider
 from .nav import NavProvider
+from .gold import FyersMcxGoldProvider, GoldPriceProvider, StaticGoldProvider
 
 # Symbols used to derive macro reference values. Overridable if FYERS changes
 # its symbology.
 NASDAQ_FUT_SYMBOL = "GLOBAL:NAS100-INDEX"   # placeholder; set to your data feed
 USDINR_SYMBOL = "NSE:USDINR-INDEX"
-GOLD_SYMBOL = "MCX:GOLDPETAL-INDEX"         # petal ~ 1g; adjust to your feed
 
 
 class FyersProvider(MarketDataProvider):
-    def __init__(self, settings: Settings, nav_provider: Optional[NavProvider] = None) -> None:
+    def __init__(self, settings: Settings, nav_provider: Optional[NavProvider] = None,
+                 gold_provider: Optional[GoldPriceProvider] = None) -> None:
         self._settings = settings
         self._client = None  # lazily created
         self._nav = nav_provider  # supplies ETF NAV, which FYERS does not
+        self._gold = gold_provider or self._default_gold()  # SGB fair value
+
+    def _default_gold(self) -> GoldPriceProvider:
+        s = self._settings
+        if s.gold_price > 0:                     # manual override wins
+            return StaticGoldProvider(s.gold_price)
+        return FyersMcxGoldProvider(
+            quote_ltp=self._ltp,
+            root=s.gold_root,
+            grams_per_quote=s.gold_grams_per_quote,
+            purity_factor=s.gold_purity_factor,
+            basis_adj=s.gold_basis_adj,
+            explicit_symbol=s.gold_symbol,
+        )
 
     # -- SDK plumbing ---------------------------------------------------------
     def _api(self):
@@ -145,10 +160,6 @@ class FyersProvider(MarketDataProvider):
         return 1.0
 
     def gold_price_per_gram(self, purity: str = "999") -> float:
-        px = self._ltp(GOLD_SYMBOL)
-        if px is None:
-            raise RuntimeError(
-                "Could not fetch spot gold; set GOLD_SYMBOL to a symbol your "
-                "FYERS account can quote, or inject gold price another way."
-            )
-        return float(px)
+        # Delegates to the gold provider (near-month MCX gold by default, or a
+        # static override). Returns an IBJA-equivalent 999 price per gram.
+        return self._gold.price_per_gram_999()

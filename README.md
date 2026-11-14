@@ -54,6 +54,21 @@ Cash-futures and buyback strategies are deliberately **left out** (they need far
 more capital). Add them in `sanarb/strategies/registry.py` when the account
 grows.
 
+## Data sources
+
+Prices come from more than one place, because FYERS alone is not enough:
+
+| Value | Source | Notes |
+|---|---|---|
+| LTP, bid/ask, volume | FYERS `quotes()` | up to 50 symbols per call |
+| Order-book resting size | FYERS `depth()` | per-symbol; feeds the liquidity gate |
+| **ETF NAV** | **AMFI daily `NAVAll.txt`** (free) | FYERS has no NAV; scheme codes wired for the ETF universe |
+| **Gold (SGB fair value)** | **FYERS MCX gold**, near-month future | auto-resolved from FYERS' symbol master, rolls monthly; 995/10g → 999/gram, tracks IBJA 999 to ~₹1/gram |
+| overnight index move, USD/INR | provider hooks | optional; refine the ETF time-zone adjustment if you have the feeds |
+
+Gold can be overridden with `SANARB_GOLD_PRICE` (static) or pinned with
+`SANARB_GOLD_SYMBOL`; NAV scheme codes live in `providers/nav.py`.
+
 ---
 
 ## Safety model
@@ -144,7 +159,8 @@ sanarb/
   models.py            Quote / Signal / Order / Position value objects
   store.py             JSON ledger + JSONL audit log
   fyers_auth.py        FYERS v3 login URL + token exchange
-  providers/           market data: base, mock (offline), fyers (lazy)
+  providers/           market data: base, mock (offline), fyers (lazy),
+                       nav (AMFI ETF NAV), gold (MCX near-month -> 999/g)
   strategies/          pure (data -> signals): etf_premium, sgb_discount
   engine/
     fairvalue.py       stale-NAV roll-forward + premium math
@@ -153,6 +169,7 @@ sanarb/
     executor.py        risk -> broker, with the live/paper gate
     runner.py          the scan->execute loop
   broker/              paper (simulated) and fyers (live, lazy, gated)
+  web/server.py        live read-only dashboard (stdlib http.server)
   cli.py               argparse CLI
 ```
 
