@@ -3,30 +3,23 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sanai"
+name = "sanarb"
 version = "0.1.0"
-description = "San AI - a self-hosted agent that learns a concept, proves it understands it, then executes it."
+description = "San Arb - a minimum-capital arbitrage scanner and auto-trade engine for FYERS."
 requires-python = ">=3.10"
-dependencies = [
-    "anthropic>=1.0.0",
-    "fastapi>=0.110",
-    "uvicorn[standard]>=0.27",
-    "jinja2>=3.1",
-    "pydantic>=2.6",
-    "pydantic-settings>=2.2",
-    "typer>=0.12",
-    "rich>=13.7",
-    "httpx2>=0.1",
-]
+# Core runs on the standard library only, so it installs and tests anywhere.
+dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+# Live trading / data via FYERS. Not needed for paper mode or tests.
+live = ["fyers-apiv3>=3.0.0"]
+dev = ["pytest>=8.0"]
 
 [project.scripts]
-sanai = "sanai.cli:main"
+sanarb = "sanarb.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["sanai*"]
+include = ["sanarb*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

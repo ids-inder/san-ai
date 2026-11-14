@@ -1,2 +1,0 @@
-[console_scripts]
-sanai = sanai.cli:main
