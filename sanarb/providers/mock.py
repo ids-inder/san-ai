@@ -46,8 +46,8 @@ _DEFAULT_QUOTES: Dict[str, Quote] = {
         published_nav=340.0,
     ),
     # SGB series trading at a discount to spot gold.
-    "NSE:SGBNOV29-SG": Quote(
-        symbol="NSE:SGBNOV29-SG",
+    "NSE:SGBDEC26-GB": Quote(
+        symbol="NSE:SGBDEC26-GB",
         ltp=8_900.0,
         bid=8_880.0,
         ask=8_920.0,
@@ -57,8 +57,8 @@ _DEFAULT_QUOTES: Dict[str, Quote] = {
         published_nav=None,
     ),
     # SGB series near fair value.
-    "NSE:SGBJAN30-SG": Quote(
-        symbol="NSE:SGBJAN30-SG",
+    "NSE:SGBAUG27-GB": Quote(
+        symbol="NSE:SGBAUG27-GB",
         ltp=9_480.0,
         bid=9_460.0,
         ask=9_500.0,

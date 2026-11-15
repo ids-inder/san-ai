@@ -50,14 +50,14 @@ def test_etf_timezone_adjustment_suppresses_false_discount():
 
 # --- SGB discount strategy --------------------------------------------------
 def test_sgb_discount_buy_on_cheap_series():
-    prov = MockProvider(gold_per_gram=9500.0)   # SGBNOV29 at 8900 -> ~6.3% disc
+    prov = MockProvider(gold_per_gram=9500.0)   # SGBDEC26 at 8900 -> ~6.3% disc
     sigs = {s.instrument.symbol: s for s in SgbDiscountStrategy().evaluate(prov, _settings())}
-    cheap = sigs["NSE:SGBNOV29-SG"]
+    cheap = sigs["NSE:SGBDEC26-GB"]
     assert cheap.action == Action.BUY
     assert cheap.edge_pct > 0
 
 
 def test_sgb_no_signal_near_fair_value():
-    prov = MockProvider(gold_per_gram=9500.0)   # SGBJAN30 at 9480 ~ fair
+    prov = MockProvider(gold_per_gram=9500.0)   # SGBAUG27 at 9480 ~ fair
     sigs = {s.instrument.symbol: s for s in SgbDiscountStrategy().evaluate(prov, _settings())}
-    assert sigs["NSE:SGBJAN30-SG"].action == Action.HOLD
+    assert sigs["NSE:SGBAUG27-GB"].action == Action.HOLD

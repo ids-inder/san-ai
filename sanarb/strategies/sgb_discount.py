@@ -29,9 +29,15 @@ from .base import Strategy
 
 
 # Each SGB series is one unit == one gram of gold. (grams_per_unit kept at 1.0.)
+# Tickers verified against FYERS' NSE symbol master (NSE_CM.csv): the series
+# suffix is "-GB". Near-maturity series are preferred - gold convergence is more
+# certain the closer redemption is. Refresh this list from the master as series
+# mature; FYERS drops expired ones.
 _UNIVERSE: List[Instrument] = [
-    Instrument("NSE:SGBNOV29-SG", "SGB 2021-22 Series (Nov 2029)", "sgb"),
-    Instrument("NSE:SGBJAN30-SG", "SGB 2021-22 Series (Jan 2030)", "sgb"),
+    Instrument("NSE:SGBDEC26-GB", "SGB 2.5% Gold Bond 2026 Sr-IV", "sgb"),
+    Instrument("NSE:SGBJAN27-GB", "SGB 2.5% Gold Bond 2027 Sr-V", "sgb"),
+    Instrument("NSE:SGBAUG27-GB", "SGB 2.5% Gold Bond 2027 Sr-III", "sgb"),
+    Instrument("NSE:SGBAPR28I-GB", "SGB 2.5% Gold Bond 2028 Sr-I", "sgb"),
 ]
 
 

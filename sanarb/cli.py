@@ -173,6 +173,22 @@ def cmd_dashboard(args, settings: Settings) -> int:
     return 0
 
 
+def cmd_verify_symbols(args, settings: Settings) -> int:
+    from .symcheck import verify
+    print("Verifying symbols against FYERS public masters (no login needed)...\n")
+    checks = verify(settings)
+    bad = 0
+    for c in checks:
+        mark = "ok  " if c.ok else "FAIL"
+        if not c.ok:
+            bad += 1
+        note = f"  - {c.note}" if c.note else ""
+        print(f"  [{mark}] {c.kind:<8} {c.symbol:<22}{note}")
+    print(f"\n{len(checks) - bad}/{len(checks)} valid.", end=" ")
+    print("All symbols resolve." if bad == 0 else f"{bad} need attention (update the universe).")
+    return 1 if bad else 0
+
+
 def cmd_auth_url(args, settings: Settings) -> int:
     from .fyers_auth import auth_url
     print(auth_url(settings))
@@ -218,6 +234,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--host", default="127.0.0.1", help="bind host (default 127.0.0.1)")
     sp.add_argument("--port", type=int, default=8777, help="port (default 8777)")
     sp.set_defaults(func=cmd_dashboard)
+
+    sp = sub.add_parser("verify-symbols", help="check all symbols against FYERS masters")
+    sp.set_defaults(func=cmd_verify_symbols)
 
     sp = sub.add_parser("auth-url", help="print FYERS login URL")
     sp.set_defaults(func=cmd_auth_url)

@@ -64,6 +64,11 @@ Prices come from more than one place, because FYERS alone is not enough:
 | Order-book resting size | FYERS `depth()` | per-symbol; feeds the liquidity gate |
 | **ETF NAV** | **AMFI daily `NAVAll.txt`** (free) | FYERS has no NAV; scheme codes wired for the ETF universe |
 | **Gold (SGB fair value)** | **FYERS MCX gold**, near-month future | auto-resolved from FYERS' symbol master, rolls monthly; 995/10g → 999/gram, tracks IBJA 999 to ~₹1/gram |
+
+All traded symbols are verified against FYERS' public masters (ETFs/SGBs in
+`NSE_CM.csv`, gold in `MCX_COM.csv`). SGB series carry a `-GB` suffix and mature
+over time, so re-run `sanarb verify-symbols` periodically and refresh the SGB
+universe in `strategies/sgb_discount.py`.
 | overnight index move, USD/INR | provider hooks | optional; refine the ETF time-zone adjustment if you have the feeds |
 
 Gold can be overridden with `SANARB_GOLD_PRICE` (static) or pinned with
@@ -113,6 +118,7 @@ sanarb scan --mock          # one pass on bundled sample data, print signals
 sanarb run --mock           # scan + PAPER execute one pass
 sanarb run --mock --loop    # continuous, every SANARB_SCAN_INTERVAL_SEC
 sanarb positions            # cash + open positions (paper or live)
+sanarb verify-symbols       # check every symbol against FYERS masters (no login)
 sanarb ledger -n 30         # tail the audit log
 sanarb config               # effective settings (secrets redacted)
 ```

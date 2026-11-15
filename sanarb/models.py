@@ -36,7 +36,7 @@ class Action(str, Enum):
 class Instrument:
     """A tradable security as FYERS addresses it.
 
-    `symbol` is the FYERS symbol id, e.g. "NSE:MON100-EQ" or "NSE:SGBNOV29-SG".
+    `symbol` is the FYERS symbol id, e.g. "NSE:MON100-EQ" or "NSE:SGBDEC26-GB".
     `lot_size` is 1 for cash-segment ETFs / bonds; kept for forward
     compatibility with F&O instruments.
     """
