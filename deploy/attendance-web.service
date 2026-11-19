@@ -1,0 +1,36 @@
+# Attendance dashboard. Read-mostly, but it holds encrypted upstream
+# credentials, so it runs unprivileged and locked down.
+# Install:  cp deploy/attendance-web.service /etc/systemd/system/
+[Unit]
+Description=Clinic attendance dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=attendance
+Group=attendance
+WorkingDirectory=/opt/attendance
+EnvironmentFile=/etc/attendance/attendance.env
+ExecStart=/opt/attendance/venv/bin/attendance serve
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+ReadWritePaths=/var/lib/attendance
+CapabilityBoundingSet=
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target

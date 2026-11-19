@@ -1,0 +1,14 @@
+# Hourly during clinic hours, plus a catch-up after midnight.
+# Install:  cp deploy/attendance-sync.{service,timer} /etc/systemd/system/
+#           systemctl enable --now attendance-sync.timer
+[Unit]
+Description=Scheduled attendance sync
+
+[Timer]
+OnCalendar=*-*-* 08..22:05:00
+OnCalendar=*-*-* 01:15:00
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

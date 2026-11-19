@@ -1,0 +1,22 @@
+# One sync pass over every enabled connection. Driven by the timer beside it.
+[Unit]
+Description=Pull attendance punches from every enabled connection
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=attendance
+Group=attendance
+WorkingDirectory=/opt/attendance
+EnvironmentFile=/etc/attendance/attendance.env
+# Re-pulling the last week is safe: punch inserts are idempotent, so late
+# edits made in the vendor's portal are picked up without duplicating rows.
+ExecStart=/opt/attendance/venv/bin/attendance sync --lookback 7
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/attendance
+CapabilityBoundingSet=

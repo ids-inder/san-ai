@@ -17,6 +17,7 @@ dependencies = [
     "typer>=0.12",
     "rich>=13.7",
     "httpx2>=0.1",
+    "cryptography>=42",
 ]
 
 [project.optional-dependencies]
@@ -24,9 +25,10 @@ dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
 
 [project.scripts]
 sanai = "sanai.cli:main"
+attendance = "attendance.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["sanai*"]
+include = ["sanai*", "attendance*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
